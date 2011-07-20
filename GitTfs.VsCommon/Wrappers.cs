@@ -386,14 +386,18 @@ namespace Sep.Git.Tfs.VsCommon
             _workspace.Shelve(_bridge.Unwrap<Shelveset>(shelveset), _bridge.Unwrap<PendingChange>(changes), _bridge.Convert<ShelvingOptions>(options));
         }
 
-        public int Checkin(IPendingChange[] changes, string comment, ICheckinNote checkinNote, IEnumerable<IWorkItemCheckinInfo> workItemChanges, TfsPolicyOverrideInfo policyOverrideInfo)
+        public int Checkin(IPendingChange[] changes, string comment, ICheckinNote checkinNote, IEnumerable<IWorkItemCheckinInfo> workItemChanges, TfsPolicyOverrideInfo policyOverrideInfo, bool queueChanges)
         {
-            return _workspace.CheckIn(
-                _bridge.Unwrap<PendingChange>(changes),
-                comment,
-                _bridge.Unwrap<CheckinNote>(checkinNote),
-                _bridge.Unwrap<WorkItemCheckinInfo>(workItemChanges),
-                ToTfs(policyOverrideInfo));
+            //changes, comment
+            WorkspaceCheckInParameters parms = new WorkspaceCheckInParameters(_bridge.Unwrap<PendingChange>(changes), comment);
+            //checkinnote
+            parms.CheckinNotes = _bridge.Unwrap<CheckinNote>(checkinNote);
+            //workitemchanges
+            parms.AssociatedWorkItems = _bridge.Unwrap<WorkItemCheckinInfo>(workItemChanges);
+            //policy override info
+            parms.PolicyOverride = ToTfs(policyOverrideInfo);
+            parms.OverrideGatedCheckIn = queueChanges;
+            return _workspace.CheckIn(parms);
         }
 
         private PolicyOverrideInfo ToTfs(TfsPolicyOverrideInfo policyOverrideInfo)
